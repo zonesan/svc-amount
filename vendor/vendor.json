@@ -1,0 +1,55 @@
+{
+	"comment": "",
+	"ignore": "test",
+	"package": [
+		{
+			"checksumSHA1": "Wh67fxjuo+FsIINnXiN5IHYeTNo=",
+			"path": "github.com/go-sql-driver/mysql",
+			"revision": "d512f204a577a4ab037a1816604c48c9c13210be",
+			"revisionTime": "2015-11-12T16:33:55Z"
+		},
+		{
+			"checksumSHA1": "Drsz3oT4NmM2tVQCRk+occxVvPA=",
+			"path": "github.com/julienschmidt/httprouter",
+			"revision": "d8ff598a019f2c7bad0980917a588193cf26666e",
+			"revisionTime": "2016-08-10T19:53:38Z"
+		},
+		{
+			"checksumSHA1": "hEWTbzdL0p3O6uT0fet4eN7Ua6o=",
+			"path": "github.com/openshift/origin/pkg/project/api/v1",
+			"revision": "50ca253117a7c3095b45190465e94308ea70df7f",
+			"revisionTime": "2016-09-06T10:38:10Z"
+		},
+		{
+			"checksumSHA1": "poB9XMHZC43WOsmWskZWbSMEfl0=",
+			"path": "github.com/openshift/origin/pkg/user/api/v1",
+			"revision": "50ca253117a7c3095b45190465e94308ea70df7f",
+			"revisionTime": "2016-09-06T10:38:10Z"
+		},
+		{
+			"checksumSHA1": "AqhUBWm7JCj44y1Fz7bdDWSqPq8=",
+			"path": "github.com/zonesan/clog",
+			"revision": "7ed8b0534d6ec80b31e21fbbfbe1e3363cc22cc7",
+			"revisionTime": "2016-10-09T07:53:50Z"
+		},
+		{
+			"checksumSHA1": "j48nL3x0UIIrkAy8Z+0u8MtAamA=",
+			"path": "k8s.io/kubernetes/pkg/api/unversioned",
+			"revision": "c79a07f21f3c42bdee3cc2beb01792a0208fce10",
+			"revisionTime": "2016-09-06T10:14:03Z"
+		},
+		{
+			"checksumSHA1": "kIMEy1ujN1Ldb05WzdkJyLK1dXo=",
+			"path": "k8s.io/kubernetes/pkg/api/v1",
+			"revision": "c79a07f21f3c42bdee3cc2beb01792a0208fce10",
+			"revisionTime": "2016-09-06T10:14:03Z"
+		},
+		{
+			"checksumSHA1": "ElpuUlRYQmhpAQ8/c9Iz//7EyKk=",
+			"path": "k8s.io/kubernetes/pkg/types",
+			"revision": "c79a07f21f3c42bdee3cc2beb01792a0208fce10",
+			"revisionTime": "2016-09-06T10:14:03Z"
+		}
+	],
+	"rootPath": "github.com/asiainfoLDP/datafoundry_payment"
+}
