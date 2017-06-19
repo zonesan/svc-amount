@@ -12,6 +12,7 @@ import (
 var (
 	dataFoundryHostAddr string
 	dataFoundryToken    string
+	oClient             *DataFoundryClient
 )
 
 type DataFoundryClient struct {
@@ -83,10 +84,10 @@ func (c *DataFoundryClient) BearerToken() string {
 }
 
 func (c *DataFoundryClient) GetServiceInstance(ns, name string) (*BackingServiceInstance, error) {
-	uri := "/namespaces/" + ns + "backingserviceinstances/" + name
+	uri := "/namespaces/" + ns + "/backingserviceinstances/" + name
 	bsi := new(BackingServiceInstance)
 	err := c.OGet(uri, bsi)
-	clog.Debug(bsi)
+	clog.Trace(bsi)
 	return bsi, err
 }
 
@@ -119,4 +120,6 @@ func init() {
 		clog.Fatal("DATAFOUNDRY_API_TOKEN must be specified.")
 	}
 	clog.Debug("datafoundry api token:", dataFoundryToken)
+
+	oClient = NewDataFoundryTokenClient()
 }

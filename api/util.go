@@ -16,6 +16,7 @@ import (
 )
 
 func doRequest(method, url string, bodyParams, v interface{}, token string) (err error) {
+	clog.Debug(method, url)
 	var reqbody []byte
 	if bodyParams != nil {
 		reqbody, err = json.Marshal(bodyParams)
