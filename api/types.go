@@ -19,3 +19,17 @@ type svcAmount struct {
 type svcAmountList struct {
 	Items []svcAmount `json:"items"`
 }
+
+var (
+	rds       = []string{"mongodb", "greenplum"}
+	hadoop    = []string{"hbase", "hive", "hdfs", "kafka", "spark"}
+	container = []string{"neo4j", "rabbitmq"}
+	services  = map[string][]string{
+		"rds":       []string{"mongodb", "greenplum"},
+		"hadoop":    []string{"hbase", "hive", "hdfs", "kafka", "spark"},
+		"container": []string{"neo4j", "rabbitmq"}}
+)
+
+type svcUsageAmount interface {
+	UsageAmount(params interface{}) *svcAmountList
+}
