@@ -119,7 +119,7 @@ func init() {
 	if len(dataFoundryToken) == 0 {
 		clog.Fatal("DATAFOUNDRY_API_TOKEN must be specified.")
 	}
-	clog.Debug("datafoundry api token:", dataFoundryToken)
+	clog.Debug("datafoundry api token:", "*HIDDEN*") // dataFoundryToken)
 
 	oClient = NewDataFoundryTokenClient()
 }

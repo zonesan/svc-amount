@@ -41,6 +41,8 @@ func AmountInfo(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			// 	{Name: "TablesQuotaa", Used: "20", Size: "100", Desc: "HBase命名空间的表数目"},
 			// 	{Name: ns, Used: instance, Size: r.URL.RequestURI(), Desc: "faked response."}}}
 			// fmt.Fprint(w, "Welcome!\n")
+			amount := svcAmount{Name: ns, Used: instance, Size: r.URL.RequestURI(), Desc: "faked response."}
+			amounts.Items = append(amounts.Items, amount)
 			RespOK(w, amounts)
 		}
 	}
@@ -52,4 +54,16 @@ func Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 		clog.Infof("driver[%v]: %v", driver, services)
 	}
 	fmt.Fprint(w, "Welcome!\n")
+}
+
+func EnableDebug(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	clog.Info("from", r.RemoteAddr, r.Method, r.URL.RequestURI(), r.Proto)
+	clog.SetLogLevel(clog.LOG_LEVEL_TRACE)
+	fmt.Fprintf(w, "debug model enabled.")
+}
+
+func DisableDebug(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	clog.Info("from", r.RemoteAddr, r.Method, r.URL.RequestURI(), r.Proto)
+	clog.SetLogLevel(clog.LOG_LEVEL_INFO)
+	fmt.Fprintf(w, "debug mode disabled.")
 }

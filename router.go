@@ -15,7 +15,9 @@ func createRouter() *httprouter.Router {
 	router.GET("/", api.Index)
 
 	router.GET(API_PREFIX+"/namespaces/:name/instances/:instance_name", api.AmountInfo)
-	// router.GET(API_PREFIX+"/namespaces/:name/serviceinstances/:instance_name", openshift.ListMembers)
+
+	router.PUT(API_PREFIX+"/debug", api.EnableDebug)
+	router.DELETE(API_PREFIX+"/debug", api.DisableDebug)
 
 	router.NotFound = &api.Mux{}
 

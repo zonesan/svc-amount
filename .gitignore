@@ -1,2 +1,4 @@
 svc-amount
 start.sh
+docker-start.sh
+bin
