@@ -17,5 +17,5 @@ func main() {
 }
 
 func init() {
-	clog.SetLogLevel(clog.LOG_LEVEL_INFO)
+	clog.SetLogLevel(clog.LOG_LEVEL_DEBUG)
 }
