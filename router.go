@@ -23,3 +23,7 @@ func createRouter() *httprouter.Router {
 
 	return router
 }
+
+func init() {
+	api.ListAmountDrivers()
+}

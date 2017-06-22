@@ -3,6 +3,8 @@ package api
 import (
 	"fmt"
 	"strings"
+
+	"github.com/zonesan/clog"
 )
 
 type AmountDriver interface {
@@ -20,6 +22,12 @@ type AmountAgent struct {
 }
 
 var drivers = make(map[string]*AmountAgent)
+
+func ListAmountDrivers() {
+	for driver, agent := range drivers {
+		clog.Infof("%-10v: %v", driver, agent.services)
+	}
+}
 
 func register(name string, services []string, driver AmountDriver) {
 	if driver == nil {
