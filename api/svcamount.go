@@ -28,6 +28,6 @@ func DoomServiceInstance(bsi *BackingServiceInstance) (*svcAmountList, error) {
 		clog.Error(err)
 		return nil, err
 	}
-	amountlist := agent.GetAmount(bsname, nil)
+	amountlist := agent.GetAmount(bsname, bsi)
 	return amountlist, nil
 }
