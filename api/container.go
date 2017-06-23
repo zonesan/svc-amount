@@ -89,7 +89,7 @@ func (c *Container) findPodsByLabelSelector(k, v string) (*kapi.PodList, error) 
 }
 
 func init() {
-	services := []string{"neo4j", "rabbitmq"}
+	services := []string{"neo4j", "rabbitmq", "etcd"}
 	container := &Container{}
 	register("container", services, container)
 }
