@@ -1,5 +1,5 @@
 /*
-Copyright 2014 The Kubernetes Authors.
+Copyright 2014 The Kubernetes Authors All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,29 +19,15 @@ package unversioned
 import (
 	"encoding/json"
 	"time"
+
+	"github.com/google/gofuzz"
 )
 
 // Time is a wrapper around time.Time which supports correct
 // marshaling to YAML and JSON.  Wrappers are provided for many
 // of the factory methods that the time package offers.
-//
-// +protobuf.options.marshal=false
-// +protobuf.as=Timestamp
-// +protobuf.options.(gogoproto.goproto_stringer)=false
 type Time struct {
-	time.Time `protobuf:"-"`
-}
-
-// DeepCopy returns a deep-copy of the Time value.  The underlying time.Time
-// type is effectively immutable in the time API, so it is safe to
-// copy-by-assign, despite the presence of (unexported) Pointer fields.
-func (t Time) DeepCopy() Time {
-	return t
-}
-
-// String returns the representation of the time.
-func (t Time) String() string {
-	return t.Time.String()
+	time.Time
 }
 
 // NewTime returns a wrapped instance of the provided time
@@ -109,27 +95,6 @@ func (t *Time) UnmarshalJSON(b []byte) error {
 	return nil
 }
 
-// UnmarshalQueryParameter converts from a URL query parameter value to an object
-func (t *Time) UnmarshalQueryParameter(str string) error {
-	if len(str) == 0 {
-		t.Time = time.Time{}
-		return nil
-	}
-	// Tolerate requests from older clients that used JSON serialization to build query params
-	if len(str) == 4 && str == "null" {
-		t.Time = time.Time{}
-		return nil
-	}
-
-	pt, err := time.Parse(time.RFC3339, str)
-	if err != nil {
-		return err
-	}
-
-	t.Time = pt.Local()
-	return nil
-}
-
 // MarshalJSON implements the json.Marshaler interface.
 func (t Time) MarshalJSON() ([]byte, error) {
 	if t.IsZero() {
@@ -140,12 +105,15 @@ func (t Time) MarshalJSON() ([]byte, error) {
 	return json.Marshal(t.UTC().Format(time.RFC3339))
 }
 
-// MarshalQueryParameter converts to a URL query parameter value
-func (t Time) MarshalQueryParameter() (string, error) {
-	if t.IsZero() {
-		// Encode unset/nil objects as an empty string
-		return "", nil
+// Fuzz satisfies fuzz.Interface.
+func (t *Time) Fuzz(c fuzz.Continue) {
+	if t == nil {
+		return
 	}
-
-	return t.UTC().Format(time.RFC3339), nil
+	// Allow for about 1000 years of randomness.  Leave off nanoseconds
+	// because JSON doesn't represent them so they can't round-trip
+	// properly.
+	t.Time = time.Unix(c.Rand.Int63n(1000*365*24*60*60), 0)
 }
+
+var _ fuzz.Interface = &Time{}

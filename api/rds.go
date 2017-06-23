@@ -5,15 +5,15 @@ type Rds struct {
 	Params  interface{}
 }
 
-func (r *Rds) UsageAmount(svc string, bsi *BackingServiceInstance) *svcAmountList {
+func (r *Rds) UsageAmount(svc string, bsi *BackingServiceInstance) (*svcAmountList, error) {
 	amounts := &svcAmountList{Items: []svcAmount{
 		{Name: "dbsize", Used: "30", Size: "50"},
 		{Name: svc, Used: bsi.Spec.BackingServiceName, Desc: "faked response from rds."}}}
-	return amounts
+	return amounts, nil
 }
 
 func init() {
-	services := []string{"mongodb", "greenplum"}
-	rds := &Rds{}
-	register("rds", services, rds)
+	// services := []string{"mongodb", "greenplum"}
+	// rds := &Rds{}
+	// register("rds", services, rds)
 }

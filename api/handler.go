@@ -24,7 +24,7 @@ func AmountInfo(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	instance := ps.ByName("instance_name")
 
 	if oClient == nil {
-		oClient = NewDataFoundryTokenClient()
+		oClient = DFClient()
 	}
 	bsi, err := oClient.GetServiceInstance(ns, instance)
 	if err != nil {
@@ -36,11 +36,7 @@ func AmountInfo(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			clog.Error(err)
 			RespError(w, err)
 		} else {
-			// amounts = &svcAmountList{Items: []svcAmount{
-			// 	{Name: "RegionsQuota", Used: "300", Size: "500"},
-			// 	{Name: "TablesQuotaa", Used: "20", Size: "100", Desc: "HBase命名空间的表数目"},
-			// 	{Name: ns, Used: instance, Size: r.URL.RequestURI(), Desc: "faked response."}}}
-			// fmt.Fprint(w, "Welcome!\n")
+			// fake amount response.
 			amount := svcAmount{Name: ns, Used: instance, Size: r.URL.RequestURI(), Desc: "faked response."}
 			amounts.Items = append(amounts.Items, amount)
 			RespOK(w, amounts)

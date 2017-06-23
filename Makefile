@@ -1,13 +1,13 @@
 GOFILES:=$(shell find . -name '*.go' | grep -v -E '(./vendor)')
 
 all: \
-	bin/linux/svc-amount-agent \
-	bin/darwin/svc-amount-agent
+	bin/linux/svc-amount \
+	bin/darwin/svc-amount
 
 images: GVERSION=$(shell $(CURDIR)/git-version.sh)
-images: bin/linux/svc-amount-agent
-	docker build --no-cache -f Dockerfile.release -t svc-amount-agent:$(GVERSION) .
-	@docker tag  svc-amount-agent:$(GVERSION) svc-amount-agent:latest
+images: bin/linux/svc-amount
+	docker build --no-cache -f Dockerfile.release -t svc-amount:$(GVERSION) .
+	@docker tag  svc-amount:$(GVERSION) svc-amount:latest
 
 check:
 	@find . -name vendor -prune -o -name '*.go' -exec gofmt -s -d {} +

@@ -122,7 +122,14 @@ func checkRespStatus(r *http.Response) error {
 	data, err := ioutil.ReadAll(r.Body)
 	if err == nil && data != nil {
 		clog.Errorf("%v,%s", r.StatusCode, data)
-		json.Unmarshal(data, &errorResponse.ErrStatus)
+		err = json.Unmarshal(data, &errorResponse.ErrStatus)
+		if err != nil {
+			clog.Error(err)
+			errorResponse.ErrStatus.Code = http.StatusInternalServerError
+			errorResponse.ErrStatus.Message = http.StatusText(http.StatusInternalServerError)
+			errorResponse.ErrStatus.Reason = unversioned.StatusReason(err.Error())
+		}
+
 	}
 
 	return errorResponse
@@ -141,6 +148,16 @@ func httpsAddr(addr string) string {
 	if !strings.HasPrefix(strings.ToLower(addr), "http://") &&
 		!strings.HasPrefix(strings.ToLower(addr), "https://") {
 		return fmt.Sprintf("https://%s", addr)
+	}
+
+	return setBaseURL(addr)
+}
+
+func httpAddr(addr string) string {
+
+	if !strings.HasPrefix(strings.ToLower(addr), "http://") &&
+		!strings.HasPrefix(strings.ToLower(addr), "https://") {
+		return fmt.Sprintf("http://%s", addr)
 	}
 
 	return setBaseURL(addr)

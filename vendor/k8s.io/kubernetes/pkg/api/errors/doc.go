@@ -1,5 +1,5 @@
 /*
-Copyright 2015 The Kubernetes Authors All rights reserved.
+Copyright 2014 The Kubernetes Authors All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,9 +14,5 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package types
-
-// UID is a type that holds unique ID values, including UUIDs.  Because we
-// don't ONLY use UUIDs, this is an alias to string.  Being a type captures
-// intent and helps make sure that UIDs and names do not get conflated.
-type UID string
+// Package errors provides detailed error types for api field validation.
+package errors

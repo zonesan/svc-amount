@@ -4,6 +4,8 @@ import (
 	"os"
 	"sync/atomic"
 
+	"fmt"
+
 	"github.com/zonesan/clog"
 	"k8s.io/kubernetes/pkg/api/unversioned"
 	kapi "k8s.io/kubernetes/pkg/api/v1"
@@ -61,17 +63,25 @@ type InstanceProvisioning struct {
 	Creds map[string]string `json:"credentials, omitempty"`
 }
 
-func NewDataFoundryTokenClient() *DataFoundryClient {
+func DFClient() *DataFoundryClient {
+	return NewDataFoundryTokenClient(dataFoundryToken)
+}
+
+func NewDataFoundryTokenClient(token string) *DataFoundryClient {
+
+	if oClient != nil {
+		return oClient
+	}
 	// host = setBaseUrl(host)
-	client := &DataFoundryClient{
+	oClient = &DataFoundryClient{
 		host:    dataFoundryHostAddr,
 		oapiURL: dataFoundryHostAddr + "/oapi/v1",
 		kapiURL: dataFoundryHostAddr + "/api/v1",
 	}
 
-	client.setBearerToken("Bearer " + dataFoundryToken)
+	oClient.setBearerToken("Bearer " + token)
 
-	return client
+	return oClient
 }
 
 func (c *DataFoundryClient) setBearerToken(token string) {
@@ -89,6 +99,27 @@ func (c *DataFoundryClient) GetServiceInstance(ns, name string) (*BackingService
 	err := c.OGet(uri, bsi)
 	clog.Trace(bsi)
 	return bsi, err
+}
+
+func (c *DataFoundryClient) GetService(ns, name string) (*kapi.Service, error) {
+	uri := "/namespaces/" + ns + "/services/" + name
+	svc := new(kapi.Service)
+	err := c.KGet(uri, svc)
+	clog.Trace(svc)
+	return svc, err
+}
+
+func (c *DataFoundryClient) ListPods(ns, queryParam string) (*kapi.PodList, error) {
+	uri := fmt.Sprintf("/namespaces/%s/pods?%s", ns, queryParam)
+	pods := &kapi.PodList{}
+	err := c.KGet(uri, pods)
+	if err != nil {
+		clog.Error(err)
+		return nil, err
+	}
+
+	return pods, err
+
 }
 
 func (c *DataFoundryClient) OGet(uri string, into interface{}) error {
@@ -121,5 +152,5 @@ func init() {
 	}
 	clog.Debug("datafoundry api token:", "*HIDDEN*") // dataFoundryToken)
 
-	oClient = NewDataFoundryTokenClient()
+	oClient = NewDataFoundryTokenClient(dataFoundryToken)
 }
