@@ -42,8 +42,8 @@ func (c *Container) UsageAmount(svc string, bsi *BackingServiceInstance) (*svcAm
 func (c *Container) findPodLabel(creds map[string]string) (k, v string) {
 	svcname := ""
 
-	if host, ok := creds["host"]; !ok {
-		clog.Error("can't find 'host' in credentials.")
+	if host, ok := creds["vhost"]; !ok {
+		clog.Error("can't find 'vhost' in credentials.")
 		return
 	} else {
 		clog.Debug("vhost:", host)
