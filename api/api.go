@@ -8,7 +8,7 @@ import (
 )
 
 type AmountDriver interface {
-	UsageAmount(svc string, bsi *BackingServiceInstance) *svcAmountList
+	UsageAmount(svc string, bsi *BackingServiceInstance) (*svcAmountList, error)
 }
 
 type Agent struct {
@@ -58,6 +58,6 @@ func NewAgent(svc, name string) (*Agent, error) {
 	return &Agent{driver: driver.driver, service: svc}, nil
 }
 
-func (agent *Agent) GetAmount(name string, bsi *BackingServiceInstance) *svcAmountList {
+func (agent *Agent) GetAmount(name string, bsi *BackingServiceInstance) (*svcAmountList, error) {
 	return agent.driver.UsageAmount(agent.service, bsi)
 }

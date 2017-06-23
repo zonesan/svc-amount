@@ -1,5 +1,5 @@
 /*
-Copyright 2016 The Kubernetes Authors.
+Copyright 2015 The Kubernetes Authors All rights reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,10 +14,5 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// Package types implements various generic types used throughout kubernetes.
 package types
-
-// int64 is used as a safe bet against wrap-around (uid's are general
-// int32) and to support uid_t -1, and -2.
-
-type UnixUserID int64
-type UnixGroupID int64
