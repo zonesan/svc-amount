@@ -51,7 +51,9 @@ func processErrors(errors <-chan error) {
 	clog.Debug("return here.")
 }
 
-func processReceivedMessages(in <-chan []byte) *svcAmount {
+func processReceivedMessages(in <-chan []byte, mountPath string) *svcAmount {
+	defer wg.Done()
+
 	for msg := range in {
 		// I have no idea why msg[0] is 0x01, I just ignore it.
 		msgStr := string(msg[1:])
@@ -59,14 +61,18 @@ func processReceivedMessages(in <-chan []byte) *svcAmount {
 			ss := strings.Split(msgStr, "\n")
 			clog.Debugf("%#v", ss)
 			for _, s := range ss {
-				if strings.Contains(s, "/run/secrets") {
+				if strings.Contains(s, mountPath) {
 					result := strings.Fields(s)
 					clog.Trace(len(result), result)
 
-					clog.Debugf("size: %v, used: %v, available: %v", result[1], result[2], result[3])
-					amount := &svcAmount{Name: "volume", Size: result[1], Used: result[2], Available: result[3]}
-					defer wg.Done()
-					return amount
+					for idx, value := range result {
+						if value == mountPath {
+							clog.Debugf("size: %v, used: %v, available: %v", result[idx-4], result[idx-3], result[idx-2])
+							amount := &svcAmount{Name: "volume", Size: result[idx-4], Used: result[idx-3], Available: result[idx-2]}
+							return amount
+						}
+					}
+
 				}
 			}
 		}
@@ -98,7 +104,7 @@ func dial(url, protocol, origin string) (ws *websocket.Conn, err error) {
 	return websocket.DialConfig(config)
 }
 
-func ws(url, origin string) (interface{}, error) {
+func ws(url, origin, mountPath string) (interface{}, error) {
 
 	protocol := ""
 	ws, err := dial(url, protocol, origin)
@@ -138,7 +144,7 @@ func ws(url, origin string) (interface{}, error) {
 	// 	out <- []byte(scanner.Text())
 	// }
 
-	amount := processReceivedMessages(in)
+	amount := processReceivedMessages(in, mountPath)
 
 	wg.Wait()
 

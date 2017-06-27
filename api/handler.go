@@ -38,9 +38,6 @@ func AmountInfo(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			clog.Error(err)
 			RespError(w, err)
 		} else {
-			// fake amount response.
-			amount := svcAmount{Name: ns, Used: instance, Size: r.URL.RequestURI(), Desc: "faked response."}
-			amounts.Items = append(amounts.Items, amount)
 			RespOK(w, amounts)
 		}
 	}

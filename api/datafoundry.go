@@ -1,9 +1,13 @@
 package api
 
 import (
+	"crypto/tls"
+	"net/http"
 	"net/url"
 	"os"
+	"strings"
 	"sync/atomic"
+	"time"
 
 	"fmt"
 
@@ -15,6 +19,8 @@ import (
 var (
 	dataFoundryHostAddr string
 	dataFoundryToken    string
+	dataFoundryUser     string
+	dataFoundryPass     string
 	oClient             *DataFoundryClient
 )
 
@@ -22,6 +28,8 @@ type DataFoundryClient struct {
 	host        string
 	oapiURL     string
 	kapiURL     string
+	username    string
+	password    string
 	bearerToken atomic.Value
 	token       atomic.Value
 }
@@ -76,13 +84,17 @@ func NewDataFoundryTokenClient(token string) *DataFoundryClient {
 	}
 	// host = setBaseUrl(host)
 	oClient = &DataFoundryClient{
-		host:    dataFoundryHostAddr,
-		oapiURL: dataFoundryHostAddr + "/oapi/v1",
-		kapiURL: dataFoundryHostAddr + "/api/v1",
+		host:     dataFoundryHostAddr,
+		username: dataFoundryUser,
+		password: dataFoundryPass,
+		oapiURL:  dataFoundryHostAddr + "/oapi/v1",
+		kapiURL:  dataFoundryHostAddr + "/api/v1",
 	}
 
 	oClient.setBearerToken("Bearer " + token)
 	oClient.setToken(token)
+
+	go oClient.updateBearerToken(time.Hour)
 
 	return oClient
 }
@@ -161,7 +173,7 @@ func (c *DataFoundryClient) ExecCommand(ns, pod, cmd string, args ...string) (in
 	origin := c.host
 	clog.Debugf("url: %s, origin: %s", url, origin)
 
-	return ws(url, origin)
+	return ws(url, origin, args[0])
 
 }
 
@@ -181,6 +193,76 @@ func (c *DataFoundryClient) KPost(uri string, body, into interface{}) error {
 	return doRequest("POST", c.kapiURL+uri, body, into, c.BearerToken())
 }
 
+func (oc *DataFoundryClient) updateBearerToken(durPhase time.Duration) {
+	for {
+
+		// clog.Debugf("Request bearer token from: %v(%v) ", oc.name, oc.host)
+
+		token, err := RequestToken(oc.host, oc.username, oc.password)
+		if err != nil {
+			clog.Error("RequestToken error, try in 15 seconds. error detail: ", err)
+
+			time.Sleep(15 * time.Second)
+		} else {
+
+			oc.setBearerToken("Bearer " + token)
+			oc.setToken(token)
+
+			clog.Infof("[%v] [%v]", oc.host, token)
+
+			// durPhase is to avoid mulitple OCs updating tokens at the same time
+			time.Sleep(3*time.Hour + durPhase)
+			durPhase = 0
+		}
+	}
+}
+
+func RequestToken(host, username, password string) (token string, err error) {
+
+	tr := &http.Transport{
+		DisableKeepAlives: true,
+		TLSClientConfig:   &tls.Config{InsecureSkipVerify: true},
+		//RoundTrip:       roundTrip,
+	}
+
+	var DefaultTransport http.RoundTripper = tr
+
+	oauthUrl := httpsAddr(host) + "/oauth/authorize?client_id=openshift-challenging-client&response_type=token"
+
+	req, _ := http.NewRequest("HEAD", oauthUrl, nil)
+	req.SetBasicAuth(username, password)
+
+	resp, err := DefaultTransport.RoundTrip(req)
+
+	//resp, err := client.Do(req)
+	if err != nil {
+		clog.Error(err)
+		return "", err
+	} else {
+		defer resp.Body.Close()
+		location, err := resp.Location()
+		if err == nil {
+			//fmt.Println("resp", url.Fragment)
+			fragments := strings.Split(location.Fragment, "&")
+			//n := proc(m)
+			n := func(s []string) map[string]string {
+				m := map[string]string{}
+				for _, v := range s {
+					n := strings.Split(v, "=")
+					m[n[0]] = n[1]
+				}
+				return m
+			}(fragments)
+
+			//r, _ := json.Marshal(n)
+
+			// return string(r), nil
+			return n["access_token"], nil
+		}
+	}
+	return token, err
+}
+
 func init() {
 	dataFoundryHostAddr = os.Getenv("DATAFOUNDRY_API_SERVER")
 	if len(dataFoundryHostAddr) == 0 {
@@ -194,6 +276,15 @@ func init() {
 		clog.Fatal("DATAFOUNDRY_API_TOKEN must be specified.")
 	}
 	clog.Debug("datafoundry api token:", "*HIDDEN*") // dataFoundryToken)
+
+	dataFoundryUser = os.Getenv("DATAFOUNDRY_ADMIN_USER")
+	if len(dataFoundryUser) == 0 {
+		clog.Fatal("DATAFOUNDRY_ADMIN_USER must be specified.")
+	}
+	dataFoundryPass = os.Getenv("DATAFOUNDRY_ADMIN_PASS")
+	if len(dataFoundryPass) == 0 {
+		clog.Fatal("DATAFOUNDRY_ADMIN_PASS must be specified.")
+	}
 
 	oClient = NewDataFoundryTokenClient(dataFoundryToken)
 }
