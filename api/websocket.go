@@ -138,9 +138,9 @@ func ws(url, origin string) (interface{}, error) {
 	// 	out <- []byte(scanner.Text())
 	// }
 
-	wg.Wait()
-
 	amount := processReceivedMessages(in)
+
+	wg.Wait()
 
 	return amount, nil
 }
