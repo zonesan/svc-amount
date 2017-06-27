@@ -14,7 +14,10 @@ type Container struct {
 	Params  interface{}
 }
 
-const BROKER_CONTAINER_NS = "service-brokers"
+const (
+	BROKER_CONTAINER_NS = "service-brokers"
+	DISKFREE_CMD        = "df"
+)
 
 func (c *Container) UsageAmount(svc string, bsi *BackingServiceInstance) (*svcAmountList, error) {
 
@@ -23,20 +26,83 @@ func (c *Container) UsageAmount(svc string, bsi *BackingServiceInstance) (*svcAm
 		return nil, fmt.Errorf("can't locate pod due to an empty label.")
 	}
 
-	clog.Debug("label:", k, v)
-
 	pods, err := c.findPodsByLabelSelector(k, v)
 	if err != nil {
 		clog.Error(err)
 		return nil, err
 	}
 
-	clog.Debug("pods:", pods)
+	var podsname []string
+	for _, v := range pods.Items {
+		podsname = append(podsname, v.Name)
+	}
+	clog.Debug("pods list:", podsname)
+
+	if len(pods.Items) == 0 {
+		return nil, fmt.Errorf("can't list pods by specified label.")
+	}
+
+	pod := &pods.Items[0]
+	mountPath, err := c.findVolumeMountPath(pod)
+	if err != nil {
+		clog.Error(err)
+		return nil, err
+	}
+
+	amount, err := c.getVolumeAmount(pod.Name, mountPath)
+	if err != nil {
+		clog.Error(err)
+		return nil, err
+	}
 
 	amounts := &svcAmountList{Items: []svcAmount{
 		{Name: "volume", Used: "30", Size: "50"},
 		{Name: svc, Used: bsi.Spec.BackingServiceName, Desc: "faked response from container."}}}
+
+	if amount != nil {
+		amounts.Items = append(amounts.Items, *amount)
+	}
 	return amounts, nil
+}
+
+func (c *Container) getVolumeAmount(podName, mountPath string) (*svcAmount, error) {
+	oc := DFClient()
+	res, err := oc.ExecCommand(BROKER_CONTAINER_NS, podName, DISKFREE_CMD, mountPath)
+	if err != nil {
+		clog.Error(err)
+		return nil, err
+	}
+	_ = res
+	return nil, nil
+}
+
+func (c *Container) findVolumeMountPath(pod *kapi.Pod) (string, error) {
+	volumes := pod.Spec.Volumes
+	var volumeName string
+	var mountPath string
+	for _, volume := range volumes {
+		if volume.PersistentVolumeClaim != nil {
+			volumeName = volume.Name
+			break
+		}
+	}
+	if len(volumeName) == 0 {
+		return "", fmt.Errorf("can't locate pvc in pod %v.", pod.Name)
+	}
+
+	container := pod.Spec.Containers[0]
+	for _, mounts := range container.VolumeMounts {
+		if mounts.Name == volumeName {
+			mountPath = mounts.MountPath
+			break
+		}
+	}
+	if len(mountPath) == 0 {
+		return "", fmt.Errorf("can't find mount point of volume '%v' in pod '%v'", volumeName, pod.Name)
+	}
+
+	clog.Debugf("volume '%v' mounted to '%v'", volumeName, mountPath)
+	return mountPath, nil
 }
 
 func (c *Container) findPodLabel(creds map[string]string) (k, v string) {
@@ -67,6 +133,7 @@ func (c *Container) findPodLabel(creds map[string]string) (k, v string) {
 	if len(k) == 0 || len(v) == 0 {
 		clog.Error("can't find label.")
 	}
+	clog.Debugf("label: %v=%v", k, v)
 	return k, v
 }
 
@@ -86,6 +153,10 @@ func (c *Container) findPodsByLabelSelector(k, v string) (*kapi.PodList, error) 
 	oc := DFClient()
 
 	return oc.ListPods(BROKER_CONTAINER_NS, encodedLabel)
+}
+
+func (c *Container) execCommand(cmd string, args ...string) (interface{}, error) {
+	return nil, nil
 }
 
 func init() {

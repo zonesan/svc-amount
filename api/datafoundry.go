@@ -1,6 +1,7 @@
 package api
 
 import (
+	"net/url"
 	"os"
 	"sync/atomic"
 
@@ -22,6 +23,7 @@ type DataFoundryClient struct {
 	oapiURL     string
 	kapiURL     string
 	bearerToken atomic.Value
+	token       atomic.Value
 }
 
 // BackingServiceInstance describe a BackingServiceInstance
@@ -80,6 +82,7 @@ func NewDataFoundryTokenClient(token string) *DataFoundryClient {
 	}
 
 	oClient.setBearerToken("Bearer " + token)
+	oClient.setToken(token)
 
 	return oClient
 }
@@ -88,9 +91,17 @@ func (c *DataFoundryClient) setBearerToken(token string) {
 	c.bearerToken.Store(token)
 }
 
+func (c *DataFoundryClient) setToken(token string) {
+	c.token.Store(token)
+}
+
 func (c *DataFoundryClient) BearerToken() string {
 	//return oc.bearerToken
 	return c.bearerToken.Load().(string)
+}
+
+func (c *DataFoundryClient) Token() string {
+	return c.token.Load().(string)
 }
 
 func (c *DataFoundryClient) GetServiceInstance(ns, name string) (*BackingServiceInstance, error) {
@@ -120,6 +131,39 @@ func (c *DataFoundryClient) ListPods(ns, queryParam string) (*kapi.PodList, erro
 
 	return pods, err
 
+}
+
+func (c *DataFoundryClient) ExecCommand(ns, pod, cmd string, args ...string) (interface{}, error) {
+	// wsd -insecureSkipVerify \
+	// -url \
+	// 'wss://10.247.32.17/api/v1/namespaces/service-brokers/pods/sb-ceeajasbecimq-rbbtmq-a4zgh/exec?command=df&command=%2fvar%2flib%2frabbitmq&acss_token=22736IIO7vk_lD1_Bq_rktRQzP7JZzDgjk66-4DjLHk' \
+	// -origin https://10.247.32.17
+	values := url.Values{}
+	values.Set("command", cmd)
+	command := values.Encode()
+
+	for _, arg := range args {
+		values.Set("command", arg)
+		cmdArg := values.Encode()
+		command = command + "&" + cmdArg
+	}
+	uri := fmt.Sprintf("%s/namespaces/%s/pods/%s/exec?%s&access_token=%s",
+		c.kapiURL, ns, pod, command, c.Token())
+	clog.Debug(uri)
+
+	u, err := url.Parse(uri)
+	if err != nil {
+		clog.Error(err)
+		return nil, err
+	}
+	u.Scheme = "wss"
+	url := u.String()
+	origin := c.host
+	clog.Debugf("url: %s, origin: %s", url, origin)
+
+	ws(url, origin)
+
+	return nil, nil
 }
 
 func (c *DataFoundryClient) OGet(uri string, into interface{}) error {
