@@ -57,6 +57,12 @@
 			"revisionTime": "2017-06-23T17:10:45Z"
 		},
 		{
+			"checksumSHA1": "fALlQNY1fM99NesfLJ50KguWsio=",
+			"path": "gopkg.in/yaml.v2",
+			"revision": "cd8b52f8269e0feb286dfeef29f8fe4d5b397e0b",
+			"revisionTime": "2017-04-07T17:21:22Z"
+		},
+		{
 			"checksumSHA1": "j48nL3x0UIIrkAy8Z+0u8MtAamA=",
 			"path": "k8s.io/kubernetes/pkg/api/unversioned",
 			"revision": "c79a07f21f3c42bdee3cc2beb01792a0208fce10",

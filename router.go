@@ -19,6 +19,12 @@ func createRouter() *httprouter.Router {
 	router.PUT(API_PREFIX+"/debug", api.EnableDebug)
 	router.DELETE(API_PREFIX+"/debug", api.DisableDebug)
 
+	debug := true
+	if debug {
+		router.GET("/debug/pprof/", api.DebugIndex)
+		router.GET("/debug/pprof/:name", api.DebugIndex)
+	}
+
 	router.NotFound = &api.Mux{}
 
 	return router

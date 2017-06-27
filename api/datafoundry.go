@@ -161,9 +161,8 @@ func (c *DataFoundryClient) ExecCommand(ns, pod, cmd string, args ...string) (in
 	origin := c.host
 	clog.Debugf("url: %s, origin: %s", url, origin)
 
-	ws(url, origin)
+	return ws(url, origin)
 
-	return nil, nil
 }
 
 func (c *DataFoundryClient) OGet(uri string, into interface{}) error {

@@ -55,13 +55,11 @@ func (c *Container) UsageAmount(svc string, bsi *BackingServiceInstance) (*svcAm
 		return nil, err
 	}
 
-	amounts := &svcAmountList{Items: []svcAmount{
-		{Name: "volume", Used: "30", Size: "50"},
-		{Name: svc, Used: bsi.Spec.BackingServiceName, Desc: "faked response from container."}}}
+	amounts := &svcAmountList{Items: []svcAmount{amount}
 
-	if amount != nil {
-		amounts.Items = append(amounts.Items, *amount)
-	}
+	// if amount != nil {
+	// 	amounts.Items = append(amounts.Items, *amount)
+	// }
 	return amounts, nil
 }
 
@@ -72,8 +70,10 @@ func (c *Container) getVolumeAmount(podName, mountPath string) (*svcAmount, erro
 		clog.Error(err)
 		return nil, err
 	}
-	_ = res
-	return nil, nil
+	if amount,ok := res.(*svcAmount);!ok{
+		return nil,fmt.Errorf("unknown error..")
+	}
+	return amount, nil
 }
 
 func (c *Container) findVolumeMountPath(pod *kapi.Pod) (string, error) {
