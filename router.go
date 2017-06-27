@@ -19,6 +19,8 @@ func createRouter() *httprouter.Router {
 	router.PUT(API_PREFIX+"/debug", api.EnableDebug)
 	router.DELETE(API_PREFIX+"/debug", api.DisableDebug)
 
+	router.GET(API_PREFIX+"/ns/:ns/cmd/:pod", api.Command)
+
 	debug := true
 	if debug {
 		router.GET("/debug/pprof/", api.DebugIndex)

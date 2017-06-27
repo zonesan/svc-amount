@@ -70,3 +70,16 @@ func DebugIndex(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	clog.Info("from", r.RemoteAddr, r.Method, r.URL.RequestURI(), r.Proto)
 	pprof.Index(w, r)
 }
+
+func Command(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	clog.Info("from", r.RemoteAddr, r.Method, r.URL.RequestURI(), r.Proto)
+
+	pod := ps.ByName("pod")
+	ns := ps.ByName("ns")
+	if ns == "" {
+		ns = "datafoundry"
+	}
+
+	oc := DFClient()
+	oc.ExecCommand(ns, pod, "df", "/run/secrets")
+}
