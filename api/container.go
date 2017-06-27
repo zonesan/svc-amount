@@ -55,7 +55,7 @@ func (c *Container) UsageAmount(svc string, bsi *BackingServiceInstance) (*svcAm
 		return nil, err
 	}
 
-	amounts := &svcAmountList{Items: []svcAmount{amount}
+	amounts := &svcAmountList{Items: []svcAmount{*amount}}
 
 	// if amount != nil {
 	// 	amounts.Items = append(amounts.Items, *amount)
@@ -70,8 +70,9 @@ func (c *Container) getVolumeAmount(podName, mountPath string) (*svcAmount, erro
 		clog.Error(err)
 		return nil, err
 	}
-	if amount,ok := res.(*svcAmount);!ok{
-		return nil,fmt.Errorf("unknown error..")
+	amount, ok := res.(*svcAmount)
+	if !ok {
+		return nil, fmt.Errorf("unknown error..")
 	}
 	return amount, nil
 }
