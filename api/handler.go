@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"net/http"
 
+	"net/http/pprof"
+
 	"github.com/julienschmidt/httprouter"
 	"github.com/zonesan/clog"
 )
@@ -62,4 +64,9 @@ func DisableDebug(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	clog.Info("from", r.RemoteAddr, r.Method, r.URL.RequestURI(), r.Proto)
 	clog.SetLogLevel(clog.LOG_LEVEL_INFO)
 	fmt.Fprintf(w, "debug mode disabled.")
+}
+
+func DebugIndex(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+	clog.Info("from", r.RemoteAddr, r.Method, r.URL.RequestURI(), r.Proto)
+	pprof.Index(w, r)
 }

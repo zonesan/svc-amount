@@ -1,94 +1,78 @@
 package api
 
 import (
+	"crypto/tls"
+	"io"
+	"strings"
+	"sync"
+
 	"github.com/zonesan/clog"
 	"golang.org/x/net/websocket"
 )
 
-func ws(url, origin string) (interface{}, error) {
-	clog.Error("NOT IMPLENTMENT.")
-	config, err := websocket.NewConfig(url, origin)
-	if err != nil {
-		return nil, err
+var done = make(chan bool)
+var wg sync.WaitGroup
+
+func inLoop(ws *websocket.Conn, errors chan<- error, in chan<- []byte) {
+	var msg = make([]byte, 512)
+
+	for {
+		var n int
+		var err error
+
+		n, err = ws.Read(msg)
+
+		if err != nil {
+			errors <- err
+			if err == io.EOF {
+				clog.Debug("inloop end here.")
+				wg.Done()
+				return
+			} else {
+				continue
+			}
+		}
+
+		in <- msg[:n]
 	}
-	_ = config
-	return nil, nil
 }
 
-// import (
-// 	"bufio"
-// 	"crypto/tls"
-// 	"flag"
-// 	"fmt"
-// 	"io"
-// 	"os"
-// 	"sync"
+func processErrors(errors <-chan error) {
+	for err := range errors {
+		if err == io.EOF {
+			clog.Warn("connection closed by remote caused by:", err)
+			wg.Done()
+			return
+			// os.Exit(0)
+		} else {
+			clog.Error(err)
+		}
+	}
+	clog.Debug("return here.")
+}
 
-// 	"github.com/fatih/color"
-// 	"golang.org/x/net/websocket"
-// )
+func processReceivedMessages(in <-chan []byte) *svcAmount {
+	for msg := range in {
+		// I have no idea why msg[0] is 0x01, I just ignore it.
+		msgStr := string(msg[1:])
+		if len(msgStr) > 0 {
+			ss := strings.Split(msgStr, "\n")
+			clog.Debugf("%#v", ss)
+			for _, s := range ss {
+				if strings.Contains(s, "/run/secrets") {
+					result := strings.Fields(s)
+					clog.Trace(len(result), result)
 
-// // Version is the current version.
-// const Version = "0.1.0"
-
-// var (
-// 	origin             string
-// 	url                string
-// 	protocol           string
-// 	displayHelp        bool
-// 	displayVersion     bool
-// 	insecureSkipVerify bool
-// 	red                = color.New(color.FgRed).SprintFunc()
-// 	magenta            = color.New(color.FgMagenta).SprintFunc()
-// 	green              = color.New(color.FgGreen).SprintFunc()
-// 	yellow             = color.New(color.FgYellow).SprintFunc()
-// 	cyan               = color.New(color.FgCyan).SprintFunc()
-// 	wg                 sync.WaitGroup
-// )
-
-// func init() {
-// 	flag.StringVar(&origin, "origin", "http://localhost/", "origin of WebSocket client")
-// 	flag.StringVar(&url, "url", "ws://localhost:1337/ws", "WebSocket server address to connect to")
-// 	flag.StringVar(&protocol, "protocol", "", "WebSocket subprotocol")
-// 	flag.BoolVar(&insecureSkipVerify, "insecureSkipVerify", false, "Skip TLS certificate verification")
-// 	flag.BoolVar(&displayHelp, "help", false, "Display help information about wsd")
-// 	flag.BoolVar(&displayVersion, "version", false, "Display version number")
-// }
-
-// func inLoop(ws *websocket.Conn, errors chan<- error, in chan<- []byte) {
-// 	var msg = make([]byte, 512)
-
-// 	for {
-// 		var n int
-// 		var err error
-
-// 		n, err = ws.Read(msg)
-
-// 		if err != nil {
-// 			errors <- err
-// 			continue
-// 		}
-
-// 		in <- msg[:n]
-// 	}
-// }
-
-// func printErrors(errors <-chan error) {
-// 	for err := range errors {
-// 		if err == io.EOF {
-// 			fmt.Printf("\r✝ %v - connection closed by remote\n", magenta(err))
-// 			os.Exit(0)
-// 		} else {
-// 			fmt.Printf("\rerr %v\n> ", red(err))
-// 		}
-// 	}
-// }
-
-// func printReceivedMessages(in <-chan []byte) {
-// 	for msg := range in {
-// 		fmt.Printf("\r< %s\n> ", cyan(string(msg)))
-// 	}
-// }
+					clog.Debugf("size: %v, used: %v, available: %v", result[1], result[2], result[3])
+					amount := &svcAmount{Name: "volume", Size: result[1], Used: result[2], Available: result[3]}
+					defer wg.Done()
+					return amount
+				}
+			}
+		}
+	}
+	return nil
+}
 
 // func outLoop(ws *websocket.Conn, out <-chan []byte, errors chan<- error) {
 // 	for msg := range out {
@@ -97,74 +81,66 @@ func ws(url, origin string) (interface{}, error) {
 // 			errors <- err
 // 		}
 // 	}
+// 	clog.Debug("out here.")
 // }
 
-// func dial(url, protocol, origin string) (ws *websocket.Conn, err error) {
-// 	config, err := websocket.NewConfig(url, origin)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-// 	if protocol != "" {
-// 		config.Protocol = []string{protocol}
-// 	}
-// 	config.TlsConfig = &tls.Config{
-// 		InsecureSkipVerify: insecureSkipVerify,
-// 	}
-// 	return websocket.DialConfig(config)
-// }
+func dial(url, protocol, origin string) (ws *websocket.Conn, err error) {
+	config, err := websocket.NewConfig(url, origin)
+	if err != nil {
+		return nil, err
+	}
+	if protocol != "" {
+		config.Protocol = []string{protocol}
+	}
+	config.TlsConfig = &tls.Config{
+		InsecureSkipVerify: true,
+	}
+	return websocket.DialConfig(config)
+}
 
-// func main() {
-// 	flag.Parse()
+func ws(url, origin string) (interface{}, error) {
 
-// 	if displayVersion {
-// 		fmt.Fprintf(os.Stdout, "%s version %s\n", os.Args[0], Version)
-// 		os.Exit(0)
-// 	}
+	protocol := ""
+	ws, err := dial(url, protocol, origin)
 
-// 	if displayHelp {
-// 		fmt.Fprintf(os.Stdout, "Usage of %s:\n", os.Args[0])
-// 		flag.PrintDefaults()
-// 		os.Exit(0)
-// 	}
+	if protocol != "" {
+		clog.Debugf("connecting to %s via %s from %s...", url, protocol, origin)
+	} else {
+		clog.Debugf("connecting to %s from %s...", url, origin)
+	}
 
-// 	ws, err := dial(url, protocol, origin)
+	if err != nil {
+		clog.Error(err)
+		return nil, err
+	}
+	defer ws.Close()
 
-// 	if protocol != "" {
-// 		fmt.Printf("connecting to %s via %s from %s...\n", yellow(url), yellow(protocol), yellow(origin))
-// 	} else {
-// 		fmt.Printf("connecting to %s from %s...\n", yellow(url), yellow(origin))
-// 	}
+	clog.Debugf("successfully connected to %s", url)
 
-// 	defer ws.Close()
+	wg.Add(3)
 
-// 	if err != nil {
-// 		panic(err)
-// 	}
+	errors := make(chan error)
+	in := make(chan []byte)
+	// out := make(chan []byte)
 
-// 	fmt.Printf("successfully connected to %s\n\n", green(url))
+	defer close(errors)
+	// defer close(out)
+	defer close(in)
 
-// 	wg.Add(3)
+	go inLoop(ws, errors, in)
+	// go processReceivedMessages(in)
+	go processErrors(errors)
+	// go outLoop(ws, out, errors)
 
-// 	errors := make(chan error)
-// 	in := make(chan []byte)
-// 	out := make(chan []byte)
+	// scanner := bufio.NewScanner(os.Stdin)
 
-// 	defer close(errors)
-// 	defer close(out)
-// 	defer close(in)
+	// for scanner.Scan() {
+	// 	out <- []byte(scanner.Text())
+	// }
 
-// 	go inLoop(ws, errors, in)
-// 	go printReceivedMessages(in)
-// 	go printErrors(errors)
-// 	go outLoop(ws, out, errors)
+	wg.Wait()
 
-// 	scanner := bufio.NewScanner(os.Stdin)
+	amount := processReceivedMessages(in)
 
-// 	fmt.Print("> ")
-// 	for scanner.Scan() {
-// 		out <- []byte(scanner.Text())
-// 		fmt.Print("> ")
-// 	}
-
-// 	wg.Wait()
-// }
+	return amount, nil
+}
