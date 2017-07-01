@@ -51,8 +51,25 @@ type BackingServiceInstanceSpec struct {
 	// description of an instance.
 	InstanceProvisioning `json:"provisioning, omitempty"`
 	// id of an instance
+	Binding []InstanceBinding `json:"binding, omitempty"`
+	// binding number of an instance
+	Bound      int    `json:"bound, omitempty"`
 	InstanceID string `json:"instance_id, omitempty"`
 	// tags of an instance
+}
+
+// InstanceBinding describe an instance binding.
+type InstanceBinding struct {
+	// bound time of an instance binding
+	BoundTime *unversioned.Time `json:"bound_time,omitempty"`
+	// bind uid of an instance binding
+	BindUuid string `json:"bind_uuid, omitempty"`
+	// deploymentconfig of an binding.
+	BindDeploymentConfig string `json:"bind_deploymentconfig,omitempty"`
+	// bind to hadoopuser
+	BindHadoopUser string `json:"bind_hadoop_user,omitempty"`
+	// credentials of an instance binding
+	Credentials map[string]string `json:"credentials, omitempty"`
 }
 
 // InstanceProvisioning describe an InstanceProvisioning detail
