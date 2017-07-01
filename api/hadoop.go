@@ -8,6 +8,10 @@ import (
 	"github.com/zonesan/clog"
 )
 
+type RemoteURI interface {
+	URI() (string, error)
+}
+
 type Hadoop struct {
 	BaseURL string
 	Params  interface{}
@@ -16,9 +20,14 @@ type Hadoop struct {
 var hadoopBaseURL string
 
 func (h *Hadoop) UsageAmount(svc string, bsi *BackingServiceInstance) (*svcAmountList, error) {
-	uri := fmt.Sprintf("%s/%s/%s", h.BaseURL, svc, bsi.Spec.InstanceID)
+	// uri := fmt.Sprintf("%s/%s/%s", h.BaseURL, svc, bsi.Spec.InstanceID)
+	uri, err := h.GetRequestURI(svc, bsi)
+	if err != nil {
+		clog.Error(err)
+		return nil, err
+	}
 
-	amounts, err := h.getAmountFromRemote(uri)
+	amounts, err := h.getAmountFromRemote(hadoopBaseURL + uri)
 	if err != nil {
 		clog.Error(err)
 	}
@@ -38,6 +47,72 @@ func (h *Hadoop) getAmountFromRemote(uri string) (*svcAmountList, error) {
 	return result, err
 }
 
+func (h *Hadoop) GetRequestURI(svc string, bsi *BackingServiceInstance) (string, error) {
+	var remote RemoteURI
+
+	switch svc {
+	case "spark", "mapreduce":
+		for _, binding := range bsi.Spec.Binding {
+			if len(binding.BindHadoopUser) > 0 {
+				remote = &yarnQueue{cred: binding.Credentials, svc: svc}
+				break
+			}
+		}
+	case "mongodb", "greenplum":
+		remote = &dbName{cred: bsi.Spec.Creds, svc: svc}
+	case "hdfs":
+		remote = &hdfsPath{cred: bsi.Spec.Creds, svc: svc}
+	case "hive", "hbase":
+		remote = &yarnQueue{cred: bsi.Spec.Creds, svc: svc}
+	default:
+		return "", fmt.Errorf("unknown service '%v' or not supported", svc)
+	}
+
+	return remote.URI()
+}
+
+type yarnQueue struct {
+	cred map[string]string
+	svc  string
+}
+
+func (yarn *yarnQueue) URI() (uri string, err error) {
+	queue, ok := yarn.cred["Yarn Queue"]
+	if !ok {
+		return "", fmt.Errorf("Yarn Queue value is empty.")
+	}
+	uri = fmt.Sprintf("/%s/%s", yarn.svc, queue)
+	return queue, nil
+}
+
+type hdfsPath struct {
+	cred map[string]string
+	svc  string
+}
+
+func (hdfs *hdfsPath) URI() (uri string, err error) {
+	path, ok := hdfs.cred["HDFS Path"]
+	if !ok {
+		return "", fmt.Errorf("HDFS Path value is empty")
+	}
+	uri = fmt.Sprintf("/%s?path=%s", hdfs.svc, path)
+	return uri, nil
+}
+
+type dbName struct {
+	cred map[string]string
+	svc  string
+}
+
+func (db *dbName) URI() (uri string, err error) {
+	name, ok := db.cred["name"]
+	if !ok {
+		return "", fmt.Errorf("%v db name is empty", db.svc)
+	}
+	uri = fmt.Sprintf("/%s/%s", db.svc, name)
+	return uri, nil
+}
+
 func init() {
 
 	hadoopBaseURL = os.Getenv("HADOOP_AMOUNT_BASEURL")
@@ -52,6 +127,6 @@ func init() {
 	register("hadoop", services, hadoop)
 
 	// since hadoop and rds is the same api.
-	hdpservices := []string{"mongodb", "greenplum", "mysql"}
+	hdpservices := []string{"mongodb", "greenplum"}
 	register("rds", hdpservices, hadoop)
 }
