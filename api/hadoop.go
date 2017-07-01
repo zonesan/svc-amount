@@ -58,6 +58,9 @@ func (h *Hadoop) GetRequestURI(svc string, bsi *BackingServiceInstance) (string,
 				break
 			}
 		}
+		if remote == nil {
+			return "", fmt.Errorf("%s %s is not bound yet", svc, bsi.Name)
+		}
 	case "mongodb", "greenplum":
 		remote = &dbName{cred: bsi.Spec.Creds, svc: svc}
 	case "hdfs":
