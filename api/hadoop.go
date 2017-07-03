@@ -69,7 +69,7 @@ func (h *Hadoop) GetRequestURI(svc string, bsi *BackingServiceInstance) (string,
 	case "hive":
 		remote = &hiveQueue{cred: bsi.Spec.Creds, svc: svc}
 	case "hbase":
-		remote = &yarnQueue{cred: bsi.Spec.Creds, svc: svc}
+		remote = &hbaseNS{cred: bsi.Spec.Creds, svc: svc}
 	default:
 		return "", fmt.Errorf("unknown service '%v' or not supported", svc)
 	}
@@ -138,6 +138,21 @@ func (hive *hiveQueue) URI() (uri string, err error) {
 	uri = fmt.Sprintf("/%s/%s", hive.svc, db[1])
 
 	return
+}
+
+type hbaseNS struct {
+	cred map[string]string
+	svc  string
+}
+
+func (hbase *hbaseNS) URI() (uri string, err error) {
+	ns, ok := hbase.cred["HBase NameSpace"]
+	if !ok {
+		return "", fmt.Errorf("%v namespace is empty", hbase.svc)
+	}
+
+	uri = fmt.Sprintf("/%s/%s", hbase.svc, ns)
+	return uri, nil
 }
 
 func init() {
