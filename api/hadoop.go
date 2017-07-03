@@ -2,6 +2,7 @@ package api
 
 import (
 	"os"
+	"strings"
 
 	"fmt"
 
@@ -65,7 +66,9 @@ func (h *Hadoop) GetRequestURI(svc string, bsi *BackingServiceInstance) (string,
 		remote = &dbName{cred: bsi.Spec.Creds, svc: svc}
 	case "hdfs":
 		remote = &hdfsPath{cred: bsi.Spec.Creds, svc: svc}
-	case "hive", "hbase":
+	case "hive":
+		remote = &hiveQueue{cred: bsi.Spec.Creds, svc: svc}
+	case "hbase":
 		remote = &yarnQueue{cred: bsi.Spec.Creds, svc: svc}
 	default:
 		return "", fmt.Errorf("unknown service '%v' or not supported", svc)
@@ -114,6 +117,27 @@ func (db *dbName) URI() (uri string, err error) {
 	}
 	uri = fmt.Sprintf("/%s/%s", db.svc, name)
 	return uri, nil
+}
+
+type hiveQueue struct {
+	cred map[string]string
+	svc  string
+}
+
+func (hive *hiveQueue) URI() (uri string, err error) {
+	credStr, ok := hive.cred["Hive database"]
+	if !ok {
+		return "", fmt.Errorf("%v Hive database value is empty", hive.svc)
+	}
+
+	db := strings.Split(credStr, ":")
+	if len(db) != 2 {
+		return "", fmt.Errorf("Hive database '%v' is invalid", credStr)
+	}
+
+	uri = fmt.Sprintf("/%s/%s", hive.svc, db[1])
+
+	return
 }
 
 func init() {
