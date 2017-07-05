@@ -114,7 +114,7 @@ func checkRespStatus(r *http.Response) error {
 	if r.StatusCode == http.StatusUnauthorized {
 		errorResponse := &StatusError{}
 		errorResponse.ErrStatus.Code = http.StatusUnauthorized
-		errorResponse.ErrStatus.Message = http.StatusText(http.StatusUnauthorized)
+		errorResponse.ErrStatus.Reason = unversioned.StatusReason(http.StatusText(http.StatusUnauthorized))
 		return errorResponse
 	}
 
@@ -126,8 +126,12 @@ func checkRespStatus(r *http.Response) error {
 		if err != nil {
 			clog.Error(err)
 			errorResponse.ErrStatus.Code = http.StatusInternalServerError
-			errorResponse.ErrStatus.Message = http.StatusText(http.StatusInternalServerError)
-			errorResponse.ErrStatus.Reason = unversioned.StatusReason(err.Error())
+			errorResponse.ErrStatus.Reason = unversioned.StatusReason(http.StatusText(http.StatusInternalServerError))
+			if len(data) > 0 {
+				errorResponse.ErrStatus.Message = string(data)
+			} else {
+				errorResponse.ErrStatus.Message = err.Error()
+			}
 		}
 
 	}
