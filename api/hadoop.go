@@ -53,21 +53,24 @@ func (h *Hadoop) GetRequestURI(svc string, bsi *BackingServiceInstance) (string,
 
 	switch svc {
 	case "spark", "mapreduce":
-		for _, binding := range bsi.Spec.Binding {
-			if len(binding.BindHadoopUser) > 0 {
-				remote = &yarnQueue{cred: binding.Credentials, svc: svc}
-				break
-			}
-		}
-		if remote == nil {
-			return "", fmt.Errorf("%s %s is not bound yet", svc, bsi.Name)
-		}
+		// on async mode we need to bind instance first.
+
+		// for _, binding := range bsi.Spec.Binding {
+		// 	if len(binding.BindHadoopUser) > 0 {
+		// 		remote = &yarnQueue{cred: binding.Credentials, svc: svc}
+		// 		break
+		// 	}
+		// }
+		// if remote == nil {
+		// 	return "", fmt.Errorf("%s %s is not bound yet", svc, bsi.Name)
+		// }
+		remote = &yarnQueue{cred: bsi.Spec.Creds, svc: svc}
 	case "mongodb", "greenplum":
 		remote = &dbName{cred: bsi.Spec.Creds, svc: svc}
 	case "hdfs":
 		remote = &hdfsPath{cred: bsi.Spec.Creds, svc: svc}
 	case "hive":
-		remote = &hiveQueue{cred: bsi.Spec.Creds, svc: svc}
+		remote = &hiveDB{cred: bsi.Spec.Creds, svc: svc}
 	case "hbase":
 		remote = &hbaseNS{cred: bsi.Spec.Creds, svc: svc}
 	default:
@@ -119,12 +122,12 @@ func (db *dbName) URI() (uri string, err error) {
 	return uri, nil
 }
 
-type hiveQueue struct {
+type hiveDB struct {
 	cred map[string]string
 	svc  string
 }
 
-func (hive *hiveQueue) URI() (uri string, err error) {
+func (hive *hiveDB) URI() (uri string, err error) {
 	credStr, ok := hive.cred["Hive database"]
 	if !ok {
 		return "", fmt.Errorf("%v Hive database value is empty", hive.svc)
