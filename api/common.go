@@ -50,10 +50,12 @@ func RespError(w http.ResponseWriter, err error) {
 }
 
 type APIResponse struct {
-	Code    int    `json:"code"`
+	Code int `json:"code"`
+	// detail of error message.
 	Message string `json:"message"`
-	Reason  string `json:"reason,omitempty"`
-	status  int    `json:"status,omitempty"`
+	// explain err code.
+	Reason string `json:"reason,omitempty"`
+	status int    `json:"status,omitempty"`
 	//Data    interface{} `json:"data,omitempty"`
 }
 
@@ -68,22 +70,22 @@ func genRespJSON(err error) *APIResponse {
 			resp.Code = int(e.ErrStatus.Code)
 
 			// frontend can't handle 403/401, he will panic...
-			{
-				if resp.Code == http.StatusForbidden || resp.Code == http.StatusUnauthorized {
-					resp.Code = http.StatusBadRequest
-				}
-			}
+			// {
+			// 	if resp.Code == http.StatusForbidden || resp.Code == http.StatusUnauthorized {
+			// 		resp.Code = http.StatusBadRequest
+			// 	}
+			// }
 			resp.status = resp.Code
 			resp.Message = e.ErrStatus.Message
+			resp.Reason = string(e.ErrStatus.Reason)
 
 		} else {
 			resp.Code = http.StatusBadRequest
 			resp.Message = err.Error()
-			resp.status = http.StatusBadRequest //http.StatusBadRequest
+			resp.status = http.StatusBadRequest
+			resp.Reason = http.StatusText(resp.Code)
 		}
 	}
-
-	resp.Reason = http.StatusText(resp.status)
 
 	return resp
 }
