@@ -133,12 +133,14 @@ func (hive *hiveDB) URI() (uri string, err error) {
 		return "", fmt.Errorf("%v Hive database value is empty", hive.svc)
 	}
 
-	db := strings.Split(credStr, ":")
-	if len(db) != 2 {
+	hivedb := strings.Split(credStr, ":")
+	if len(hivedb) != 2 {
 		return "", fmt.Errorf("Hive database '%v' is invalid", credStr)
 	}
 
-	uri = fmt.Sprintf("/%s/%s", hive.svc, db[1])
+	db, queue := hivedb[0], hivedb[1]
+
+	uri = fmt.Sprintf("/%s/%s?queue=%s", hive.svc, db, queue)
 
 	return
 }
