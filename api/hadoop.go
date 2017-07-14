@@ -73,6 +73,8 @@ func (h *Hadoop) GetRequestURI(svc string, bsi *BackingServiceInstance) (string,
 		remote = &hiveDB{cred: bsi.Spec.Creds, svc: svc}
 	case "hbase":
 		remote = &hbaseNS{cred: bsi.Spec.Creds, svc: svc}
+	case "kafka":
+		remote = &kafkaTopic{cred: bsi.Spec.Creds, svc: svc}
 	default:
 		return "", fmt.Errorf("unknown service '%v' or not supported", svc)
 	}
@@ -157,6 +159,21 @@ func (hbase *hbaseNS) URI() (uri string, err error) {
 	}
 
 	uri = fmt.Sprintf("/%s/%s", hbase.svc, ns)
+	return uri, nil
+}
+
+type kafkaTopic struct {
+	cred map[string]string
+	svc  string
+}
+
+func (kafka *kafkaTopic) URI() (uri string, err error) {
+	topic, ok := kafka.cred["topic"]
+	if !ok {
+		return "", fmt.Errorf("%v topic is empty", kafka.svc)
+	}
+
+	uri = fmt.Sprintf("/%s/%s", kafka.svc, topic)
 	return uri, nil
 }
 
