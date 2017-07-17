@@ -93,7 +93,7 @@ func (yarn *yarnQueue) URI() (uri string, err error) {
 		return "", fmt.Errorf("Yarn Queue value is empty.")
 	}
 	uri = fmt.Sprintf("/%s/%s", yarn.svc, queue)
-	return queue, nil
+	return
 }
 
 type hdfsPath struct {
