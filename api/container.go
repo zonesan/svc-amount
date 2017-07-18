@@ -161,7 +161,7 @@ func (c *Container) execCommand(cmd string, args ...string) (interface{}, error)
 }
 
 func init() {
-	services := []string{"neo4j", "rabbitmq", "etcd"}
+	services := []string{"neo4j", "rabbitmq"}
 	container := &Container{}
 	register("container", services, container)
 }
