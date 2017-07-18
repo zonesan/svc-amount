@@ -20,7 +20,7 @@ func (m *Mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 }
 
 func AmountInfo(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	clog.Info("from", r.RemoteAddr, r.Method, r.URL.RequestURI(), r.Proto)
+	clog.Debug("from", r.RemoteAddr, r.Method, r.URL.RequestURI(), r.Proto)
 
 	ns := ps.ByName("name")
 	instance := ps.ByName("instance_name")
@@ -38,6 +38,7 @@ func AmountInfo(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 			clog.Error(err)
 			RespError(w, err)
 		} else {
+			clog.Tracef("%#v", amounts)
 			RespOK(w, amounts)
 		}
 	}
@@ -54,13 +55,15 @@ func Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 func EnableDebug(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	clog.Info("from", r.RemoteAddr, r.Method, r.URL.RequestURI(), r.Proto)
 	clog.SetLogLevel(clog.LOG_LEVEL_TRACE)
-	fmt.Fprintf(w, "debug model enabled.")
+	clog.Debug("DEBUG MODE ENABLED")
+	fmt.Fprintf(w, "DEBUG MODE ENABLED")
 }
 
 func DisableDebug(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
-	clog.Info("from", r.RemoteAddr, r.Method, r.URL.RequestURI(), r.Proto)
+	clog.Debug("from", r.RemoteAddr, r.Method, r.URL.RequestURI(), r.Proto)
 	clog.SetLogLevel(clog.LOG_LEVEL_INFO)
-	fmt.Fprintf(w, "debug mode disabled.")
+	clog.Info("DEBUG MODE DISABLED")
+	fmt.Fprintf(w, "DEBUG MODE DISABLED")
 }
 
 func DebugIndex(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {

@@ -137,7 +137,7 @@ func (c *DataFoundryClient) GetServiceInstance(ns, name string) (*BackingService
 	uri := "/namespaces/" + ns + "/backingserviceinstances/" + name
 	bsi := new(BackingServiceInstance)
 	err := c.OGet(uri, bsi)
-	clog.Trace(bsi)
+	clog.Tracef("%#v", bsi)
 	return bsi, err
 }
 
