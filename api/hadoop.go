@@ -87,12 +87,14 @@ type yarnQueue struct {
 	svc  string
 }
 
+// since queue is start with root., we remove root. prefix by using queue[5:]
+
 func (yarn *yarnQueue) URI() (uri string, err error) {
 	queue, ok := yarn.cred["Yarn Queue"]
 	if !ok {
 		return "", fmt.Errorf("Yarn Queue value is empty.")
 	}
-	uri = fmt.Sprintf("/%s/%s", yarn.svc, queue)
+	uri = fmt.Sprintf("/%s/%s", yarn.svc, queue[5:])
 	return
 }
 
@@ -142,7 +144,8 @@ func (hive *hiveDB) URI() (uri string, err error) {
 
 	db, queue := hivedb[0], hivedb[1]
 
-	uri = fmt.Sprintf("/%s/%s?queue=%s", hive.svc, db, queue)
+	// remove root. prefix
+	uri = fmt.Sprintf("/%s/%s?queue=%s", hive.svc, db, queue[5:])
 
 	return
 }
