@@ -65,7 +65,7 @@ func (c *Container) UsageAmount(svc string, bsi *BackingServiceInstance) (*svcAm
 
 func (c *Container) getVolumeAmount(podName, mountPath string) (*svcAmount, error) {
 	oc := DFClient()
-	res, err := oc.ExecCommand(BROKER_CONTAINER_NS, podName, DISKFREE_CMD, mountPath)
+	res, err := oc.ExecCommand(BROKER_CONTAINER_NS, podName, DISKFREE_CMD, "-h", mountPath)
 	if err != nil {
 		clog.Error(err)
 		return nil, err
