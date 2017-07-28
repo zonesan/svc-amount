@@ -190,7 +190,7 @@ func (c *DataFoundryClient) ExecCommand(ns, pod, cmd string, args ...string) (in
 	origin := c.host
 	clog.Debugf("url: %s, origin: %s", url, origin)
 
-	return ws(url, origin, args[0])
+	return ws(url, origin, args[len(args)-1])
 
 }
 
