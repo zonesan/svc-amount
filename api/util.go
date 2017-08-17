@@ -15,7 +15,7 @@ import (
 	"github.com/zonesan/clog"
 )
 
-func doRequest(method, url string, bodyParams, v interface{}, token string) (err error) {
+func doRequest(method, url string, bodyParams, v interface{}, token string, header http.Header) (err error) {
 	clog.Debug(method, url)
 	var reqbody []byte
 	if bodyParams != nil {
@@ -25,7 +25,7 @@ func doRequest(method, url string, bodyParams, v interface{}, token string) (err
 		}
 	}
 
-	resp, err := request(method, url, reqbody, token)
+	resp, err := request(method, url, reqbody, token, header)
 
 	if err != nil {
 		return err
@@ -59,7 +59,7 @@ func doRequest(method, url string, bodyParams, v interface{}, token string) (err
 
 }
 
-func request(method string, url string, body []byte, token string) (*http.Response, error) {
+func request(method string, url string, body []byte, token string, header http.Header) (*http.Response, error) {
 	// token := c.BearerToken()
 	// if token == "" {
 	// 	return nil, errors.New("token is blank")
@@ -77,6 +77,9 @@ func request(method string, url string, body []byte, token string) (*http.Respon
 	if err != nil {
 		return nil, err
 	}
+	if len(header) > 0 {
+		req.Header = header
+	}
 
 	req.Header.Set("Content-Type", "application/json")
 
@@ -85,6 +88,7 @@ func request(method string, url string, body []byte, token string) (*http.Respon
 		req.Header.Set("Authorization", token)
 	}
 
+	clog.Trace("request header:", req.Header)
 	transCfg := &http.Transport{
 		DisableKeepAlives: true,
 		TLSClientConfig:   &tls.Config{InsecureSkipVerify: true},

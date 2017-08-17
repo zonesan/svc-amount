@@ -1,6 +1,7 @@
 package api
 
 import (
+	"net/http"
 	"os"
 	"strings"
 
@@ -20,7 +21,7 @@ type Hadoop struct {
 
 var hadoopBaseURL string
 
-func (h *Hadoop) UsageAmount(svc string, bsi *BackingServiceInstance) (*svcAmountList, error) {
+func (h *Hadoop) UsageAmount(svc string, bsi *BackingServiceInstance, req *http.Request) (*svcAmountList, error) {
 	// uri := fmt.Sprintf("%s/%s/%s", h.BaseURL, svc, bsi.Spec.InstanceID)
 	uri, err := h.GetRequestURI(svc, bsi)
 	if err != nil {
@@ -28,7 +29,7 @@ func (h *Hadoop) UsageAmount(svc string, bsi *BackingServiceInstance) (*svcAmoun
 		return nil, err
 	}
 
-	amounts, err := h.getAmountFromRemote(hadoopBaseURL + uri)
+	amounts, err := h.getAmountFromRemote(hadoopBaseURL+uri, req)
 	if err != nil {
 		clog.Error(err)
 	}
@@ -42,9 +43,9 @@ func (h *Hadoop) UsageAmount(svc string, bsi *BackingServiceInstance) (*svcAmoun
 	// return amounts
 }
 
-func (h *Hadoop) getAmountFromRemote(uri string) (*svcAmountList, error) {
+func (h *Hadoop) getAmountFromRemote(uri string, r *http.Request) (*svcAmountList, error) {
 	result := new(svcAmountList)
-	err := doRequest("GET", uri, nil, result, "")
+	err := doRequest("GET", uri, nil, result, "", r.Header)
 	return result, err
 }
 

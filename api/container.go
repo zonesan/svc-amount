@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"net/http"
 	"net/url"
 	"strings"
 
@@ -19,7 +20,7 @@ const (
 	DISKFREE_CMD        = "df"
 )
 
-func (c *Container) UsageAmount(svc string, bsi *BackingServiceInstance) (*svcAmountList, error) {
+func (c *Container) UsageAmount(svc string, bsi *BackingServiceInstance, req *http.Request) (*svcAmountList, error) {
 
 	k, v := c.findPodLabel(bsi.Spec.Creds)
 	if len(k) == 0 || len(v) == 0 {
