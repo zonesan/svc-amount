@@ -33,7 +33,7 @@ func AmountInfo(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 		clog.Error(err)
 		RespError(w, err)
 	} else {
-		amounts, err := DoomServiceInstance(bsi)
+		amounts, err := DoomServiceInstance(r, bsi)
 		if err != nil {
 			clog.Error(err)
 			RespError(w, err)

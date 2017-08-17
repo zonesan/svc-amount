@@ -16,6 +16,8 @@ var wg sync.WaitGroup
 func inLoop(ws *websocket.Conn, errors chan<- error, in chan<- []byte) {
 	var msg = make([]byte, 512)
 
+	defer close(in)
+
 	for {
 		var n int
 		var err error
@@ -131,7 +133,7 @@ func ws(url, origin, mountPath string) (interface{}, error) {
 
 	defer close(errors)
 	// defer close(out)
-	defer close(in)
+	// defer close(in)
 
 	go inLoop(ws, errors, in)
 	// go processReceivedMessages(in)

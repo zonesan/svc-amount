@@ -2,18 +2,20 @@ package api
 
 import (
 	"fmt"
+	"net/http"
 	"strings"
 
 	"github.com/zonesan/clog"
 )
 
 type AmountDriver interface {
-	UsageAmount(svc string, bsi *BackingServiceInstance) (*svcAmountList, error)
+	UsageAmount(svc string, bsi *BackingServiceInstance, req *http.Request) (*svcAmountList, error)
 }
 
 type Agent struct {
 	driver  AmountDriver
 	service string
+	req     *http.Request
 }
 
 type AmountAgent struct {
@@ -59,5 +61,5 @@ func NewAgent(svc, name string) (*Agent, error) {
 }
 
 func (agent *Agent) GetAmount(name string, bsi *BackingServiceInstance) (*svcAmountList, error) {
-	return agent.driver.UsageAmount(agent.service, bsi)
+	return agent.driver.UsageAmount(agent.service, bsi, agent.req)
 }

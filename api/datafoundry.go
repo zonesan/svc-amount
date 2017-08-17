@@ -190,24 +190,24 @@ func (c *DataFoundryClient) ExecCommand(ns, pod, cmd string, args ...string) (in
 	origin := c.host
 	clog.Debugf("url: %s, origin: %s", url, origin)
 
-	return ws(url, origin, args[0])
+	return ws(url, origin, args[len(args)-1])
 
 }
 
 func (c *DataFoundryClient) OGet(uri string, into interface{}) error {
-	return doRequest("GET", c.oapiURL+uri, nil, into, c.BearerToken())
+	return doRequest("GET", c.oapiURL+uri, nil, into, c.BearerToken(), nil)
 }
 
 func (c *DataFoundryClient) OPost(uri string, body, into interface{}) error {
-	return doRequest("POST", c.oapiURL+uri, body, into, c.BearerToken())
+	return doRequest("POST", c.oapiURL+uri, body, into, c.BearerToken(), nil)
 }
 
 func (c *DataFoundryClient) KGet(uri string, into interface{}) error {
-	return doRequest("GET", c.kapiURL+uri, nil, into, c.BearerToken())
+	return doRequest("GET", c.kapiURL+uri, nil, into, c.BearerToken(), nil)
 }
 
 func (c *DataFoundryClient) KPost(uri string, body, into interface{}) error {
-	return doRequest("POST", c.kapiURL+uri, body, into, c.BearerToken())
+	return doRequest("POST", c.kapiURL+uri, body, into, c.BearerToken(), nil)
 }
 
 func (oc *DataFoundryClient) updateBearerToken(durPhase time.Duration) {

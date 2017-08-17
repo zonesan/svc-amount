@@ -1,6 +1,8 @@
 package api
 
 import (
+	"net/http"
+
 	"github.com/zonesan/clog"
 )
 
@@ -16,7 +18,7 @@ type svcAmountList struct {
 	Items []svcAmount `json:"items"`
 }
 
-func DoomServiceInstance(bsi *BackingServiceInstance) (*svcAmountList, error) {
+func DoomServiceInstance(r *http.Request, bsi *BackingServiceInstance) (*svcAmountList, error) {
 	bsname := bsi.Spec.BackingServiceName
 	clog.Debug("service:", bsname)
 	// for k, v := range bsi.Spec.Creds {
@@ -28,5 +30,6 @@ func DoomServiceInstance(bsi *BackingServiceInstance) (*svcAmountList, error) {
 		clog.Error(err)
 		return nil, err
 	}
+	agent.req = r
 	return agent.GetAmount(bsname, bsi)
 }

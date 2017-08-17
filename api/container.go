@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"net/http"
 	"net/url"
 	"strings"
 
@@ -19,7 +20,7 @@ const (
 	DISKFREE_CMD        = "df"
 )
 
-func (c *Container) UsageAmount(svc string, bsi *BackingServiceInstance) (*svcAmountList, error) {
+func (c *Container) UsageAmount(svc string, bsi *BackingServiceInstance, req *http.Request) (*svcAmountList, error) {
 
 	k, v := c.findPodLabel(bsi.Spec.Creds)
 	if len(k) == 0 || len(v) == 0 {
@@ -65,7 +66,7 @@ func (c *Container) UsageAmount(svc string, bsi *BackingServiceInstance) (*svcAm
 
 func (c *Container) getVolumeAmount(podName, mountPath string) (*svcAmount, error) {
 	oc := DFClient()
-	res, err := oc.ExecCommand(BROKER_CONTAINER_NS, podName, DISKFREE_CMD, mountPath)
+	res, err := oc.ExecCommand(BROKER_CONTAINER_NS, podName, DISKFREE_CMD, "-h", mountPath)
 	if err != nil {
 		clog.Error(err)
 		return nil, err
