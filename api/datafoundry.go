@@ -161,7 +161,17 @@ func (c *DataFoundryClient) ListPods(ns, queryParam string) (*kapi.PodList, erro
 	return pods, err
 
 }
+func (c *DataFoundryClient) DeletetPods(ns, queryParam string) (*kapi.PodList, error) {
+	uri := fmt.Sprintf("/namespaces/%s/pods?%s", ns, queryParam)
+	pods := &kapi.PodList{}
+	err := c.KDelete(uri, pods)
+	if err != nil {
+		clog.Error(err)
+		return nil, err
+	}
+	return pods, err
 
+}
 func (c *DataFoundryClient) ExecCommand(ns, pod, cmd string, args ...string) (interface{}, error) {
 	// wsd -insecureSkipVerify \
 	// -url \
@@ -201,6 +211,9 @@ func (c *DataFoundryClient) OGet(uri string, into interface{}) error {
 func (c *DataFoundryClient) OPost(uri string, body, into interface{}) error {
 	return doRequest("POST", c.oapiURL+uri, body, into, c.BearerToken(), nil)
 }
+func (c *DataFoundryClient) ODelete(uri string, into interface{}) error {
+	return doRequest("DELETE", c.oapiURL+uri, &kapi.DeleteOptions{}, into, c.BearerToken(), nil)
+}
 
 func (c *DataFoundryClient) KGet(uri string, into interface{}) error {
 	return doRequest("GET", c.kapiURL+uri, nil, into, c.BearerToken(), nil)
@@ -208,6 +221,10 @@ func (c *DataFoundryClient) KGet(uri string, into interface{}) error {
 
 func (c *DataFoundryClient) KPost(uri string, body, into interface{}) error {
 	return doRequest("POST", c.kapiURL+uri, body, into, c.BearerToken(), nil)
+}
+
+func (c *DataFoundryClient) KDelete(uri string, into interface{}) error {
+	return doRequest("DELETE", c.kapiURL+uri, &kapi.DeleteOptions{}, into, c.BearerToken(), nil)
 }
 
 func (oc *DataFoundryClient) updateBearerToken(durPhase time.Duration) {

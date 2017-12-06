@@ -11,6 +11,7 @@ import (
 )
 
 type Container struct {
+	ServiceDefault
 	BaseURL string
 	Params  interface{}
 }
@@ -62,6 +63,26 @@ func (c *Container) UsageAmount(svc string, bsi *BackingServiceInstance, req *ht
 	// 	amounts.Items = append(amounts.Items, *amount)
 	// }
 	return amounts, nil
+}
+
+func (c *Container) RestartInstance(bsi *BackingServiceInstance, req *http.Request) error {
+	k, v := c.findPodLabel(bsi.Spec.Creds)
+	if len(k) == 0 || len(v) == 0 {
+		return fmt.Errorf("can't locate pod due to an empty label.")
+	}
+
+	pods, err := c.restartPodsByLabelSelector(k, v)
+	if err != nil {
+		clog.Error(err)
+		return err
+	}
+	var podsname []string
+	for _, v := range pods.Items {
+		podsname = append(podsname, v.Name)
+	}
+	clog.Debug("deleted pods:", podsname)
+
+	return nil
 }
 
 func (c *Container) getVolumeAmount(podName, mountPath string) (*svcAmount, error) {
@@ -129,7 +150,7 @@ func (c *Container) findPodLabel(creds map[string]string) (k, v string) {
 		return
 	}
 
-	for k, v = range svc.Labels {
+	for k, v = range svc.Spec.Selector {
 
 	}
 	if len(k) == 0 || len(v) == 0 {
@@ -157,12 +178,25 @@ func (c *Container) findPodsByLabelSelector(k, v string) (*kapi.PodList, error) 
 	return oc.ListPods(BROKER_CONTAINER_NS, encodedLabel)
 }
 
+func (c *Container) restartPodsByLabelSelector(k, v string) (*kapi.PodList, error) {
+	labelSelector := k + "=" + v
+
+	values := url.Values{}
+	values.Set("labelSelector", labelSelector)
+	encodedLabel := values.Encode()
+	clog.Debug(encodedLabel)
+
+	oc := DFClient()
+
+	return oc.DeletetPods(BROKER_CONTAINER_NS, encodedLabel)
+}
+
 func (c *Container) execCommand(cmd string, args ...string) (interface{}, error) {
 	return nil, nil
 }
 
 func init() {
-	services := []string{"neo4j", "rabbitmq"}
+	services := []string{"neo4j", "rabbitmq", "ocsp"}
 	container := &Container{}
 	register("container", services, container)
 }

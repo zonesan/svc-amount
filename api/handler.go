@@ -44,6 +44,36 @@ func AmountInfo(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
 	}
 }
 
+func RestartInstance(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+	clog.Debug("from", r.RemoteAddr, r.Method, r.URL.RequestURI(), r.Proto)
+
+	ns := ps.ByName("name")
+	instance := ps.ByName("instance_name")
+
+	if oClient == nil {
+		oClient = DFClient()
+	}
+	bsi, err := oClient.GetServiceInstance(ns, instance)
+	if err != nil {
+		clog.Error(err)
+		RespError(w, err)
+	} else {
+		agent, err := findDriver(bsi.Spec.BackingServiceName)
+		if err != nil {
+			clog.Error(err)
+			RespError(w, err)
+			return
+		}
+		agent.req = r
+		err = agent.RestartInstance(bsi)
+		if err != nil {
+			RespError(w, err)
+		}
+		RespOK(w, nil)
+
+	}
+}
+
 func Index(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
 	clog.Info("from", r.RemoteAddr, r.Method, r.URL.RequestURI(), r.Proto)
 	for driver, services := range drivers {
