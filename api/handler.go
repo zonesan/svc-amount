@@ -68,9 +68,9 @@ func RestartInstance(w http.ResponseWriter, r *http.Request, ps httprouter.Param
 		err = agent.RestartInstance(bsi)
 		if err != nil {
 			RespError(w, err)
+			return
 		}
 		RespOK(w, nil)
-
 	}
 }
 
