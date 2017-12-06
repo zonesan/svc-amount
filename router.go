@@ -16,6 +16,8 @@ func createRouter() *httprouter.Router {
 
 	router.GET(API_PREFIX+"/namespaces/:name/instances/:instance_name", api.AmountInfo)
 
+	router.PUT(API_PREFIX+"/namespaces/:name/instances/:instance_name", api.RestartInstance)
+
 	router.PUT(API_PREFIX+"/debug", api.EnableDebug)
 	router.DELETE(API_PREFIX+"/debug", api.DisableDebug)
 
@@ -33,5 +35,5 @@ func createRouter() *httprouter.Router {
 }
 
 func init() {
-	api.ListAmountDrivers()
+	api.ListDrivers()
 }

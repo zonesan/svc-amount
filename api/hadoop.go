@@ -15,6 +15,7 @@ type RemoteURI interface {
 }
 
 type Hadoop struct {
+	ServiceDefault
 	BaseURL string
 	Params  interface{}
 }
